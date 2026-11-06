@@ -20,6 +20,7 @@ from programs import PROGRAMS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
+PLACEMENTS = ("ideal", "single", "compiler")
 
 
 def checkout(var, repo):
@@ -42,6 +43,8 @@ def dl(relations, rules):
 
 def compile_program(program, shard_amt, placement, grid):
     """The compiled program's directory, compiled once."""
+    if placement not in PLACEMENTS:
+        raise ValueError(f"placement must be one of {', '.join(PLACEMENTS)}, not {placement!r}")
     d = os.path.join(OUT, "compiled", f"{program}-{shard_amt}-{placement}-{grid}")
     if os.path.exists(os.path.join(d, "prog", "nodes.json")):
         return os.path.join(d, "prog")
