@@ -1,0 +1,11 @@
+{
+  "question": "How do the transitive closure programs compare on one node?",
+  "datasets": {"dense": [10, 20, 40, 80, 160], "chain": [20, 40, 80, 160, 320], "shortcuts": [20, 40, 80, 160, 320]},
+  "seeds": [0, 1, 2],
+  "variants": {
+    "linear, left": {"program": "tc_linear_left", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
+    "linear, right": {"program": "tc_linear_right", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
+    "nonlinear": {"program": "tc_nonlinear", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
+    "repeated squaring, 9 squarings": {"program": "tc_bin", "shard_amt": 9, "sharder": "none", "placement": "single", "grid": "1x1"}
+  }
+}

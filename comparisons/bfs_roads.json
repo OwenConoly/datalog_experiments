@@ -1,0 +1,13 @@
+{
+  "question": "When does BFS sharded over a grid beat single-node BFS? (roads, METIS regions)",
+  "datasets": {"oldenburg": [200, 500, 1000, 2000, 6105]},
+  "seeds": [0],
+  "variants": {
+    "1 node": {"program": "reach", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
+    "2x2 grid, 4 regions": {"program": "bfs", "shard_amt": 4, "sharder": "metis", "placement": "ideal", "grid": "2x2"},
+    "3x3 grid, 9 regions": {"program": "bfs", "shard_amt": 9, "sharder": "metis", "placement": "ideal", "grid": "3x3"},
+    "2x2 grid, compiler's layout": {"program": "bfs", "shard_amt": 4, "sharder": "metis", "placement": "compiler", "grid": "2x2"},
+    "1 node, 4 region relations": {"program": "bfs", "shard_amt": 4, "sharder": "metis", "placement": "single", "grid": "1x1"},
+    "1 node, 9 region relations": {"program": "bfs", "shard_amt": 9, "sharder": "metis", "placement": "single", "grid": "1x1"}
+  }
+}

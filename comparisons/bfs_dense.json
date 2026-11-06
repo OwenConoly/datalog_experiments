@@ -1,0 +1,12 @@
+{
+  "question": "When does BFS sharded over a grid beat single-node BFS? (dense graphs, mod regions)",
+  "datasets": {"dense": [50, 100, 200, 400]},
+  "seeds": [0],
+  "variants": {
+    "1 node": {"program": "reach", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
+    "2x2 grid, 4 regions": {"program": "bfs", "shard_amt": 4, "sharder": "mod", "placement": "ideal", "grid": "2x2"},
+    "3x3 grid, 9 regions": {"program": "bfs", "shard_amt": 9, "sharder": "mod", "placement": "ideal", "grid": "3x3"},
+    "1 node, 4 region relations": {"program": "bfs", "shard_amt": 4, "sharder": "mod", "placement": "single", "grid": "1x1"},
+    "1 node, 9 region relations": {"program": "bfs", "shard_amt": 9, "sharder": "mod", "placement": "single", "grid": "1x1"}
+  }
+}
