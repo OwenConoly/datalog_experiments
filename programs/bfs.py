@@ -1,7 +1,7 @@
 """
 A dataset here is {"node": the nodes, "edge": the directed edges (u, v), "start": the node the search starts from}, nodes being ints.
 """
-from ..graphs import metis, mod, reachable
+from .graphs_common import metis, mod, reachable
 
 
 def relations(shard_amt):

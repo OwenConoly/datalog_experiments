@@ -1,10 +1,7 @@
 """
-Triangles: (x, y, z) with R(x, y), S(y, z) and T(z, x), kept when Hash(x, y, z) holds. Each input relation is split into
-shard_amt² pieces by its columns' shards: R{i}{j} holds R's pairs from shard i to shard j. The suggested layout puts each
-Triangle{i}{j}{k} on a node of its own. A dataset is {"node": the nodes, "R", "S", "T": pairs of nodes, "Hash": triples
-of nodes}, nodes being ints.
+A dataset is {"node": the nodes, "R", "S", "T": pairs of nodes, "Hash": triples of nodes}, nodes being ints.
 """
-from ..graphs import mod
+from .graphs_common import mod
 
 
 def relations(shard_amt):

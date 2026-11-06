@@ -1,7 +1,7 @@
 """
-Single-source reachability on one node. A dataset is a graph with a start (see graphs.py); shard_amt is ignored.
+Single-source reachability on one node. A dataset is a graph with a start (see graphs_common.py); shard_amt is ignored.
 """
-from ..graphs import reachable, unsharded
+from .graphs_common import reachable, unsharded
 
 
 def relations(shard_amt):

@@ -1,8 +1,7 @@
 """
-Transitive closure on one node, linear, recursing on the left. A dataset is a graph (see graphs.py); shard_amt is
-ignored.
+A dataset is a graph (see graphs_common.py); shard_amt is ignored.
 """
-from ..graphs import closure, unsharded
+from .graphs_common import closure, unsharded
 
 
 def relations(shard_amt):

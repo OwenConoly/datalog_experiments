@@ -1,16 +1,11 @@
 # programs
 
-Each program is `programs/<name>/program.py`, registered in `programs/__init__.py`:
-
-```python
-from .<name> import program as <name>
-
-PROGRAMS = {..., "<name>": <name>}
-```
+Each program is `programs/<name>.py`.
+A dictionary mapping program names to modules (e.g.,"bfs" -> bfs.py) is maintained in `programs/__init__.py`.
 
 A program is a family of Datalog programs over one parameter, `shard_amt`.
 
-`program.py` must define:
+`<name>.py` must define:
 
 | name | returns |
 |---|---|

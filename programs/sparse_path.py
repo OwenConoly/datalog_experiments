@@ -3,11 +3,11 @@ All-pairs paths (Path, the transitive closure) built from each shard's own closu
 between shards. Shard i's rules use E{i} (its edges), T{i} (their closure), B{i} (its ends of edges leaving it) and
 Enters{i}; the boundary closure's rules (all_boundary, TC_boundary) go on a hub. The suggested layout puts the hub in the
 middle of the smallest square grid with shard_amt + 1 nodes, and the shards on the other nodes in order. A dataset is a
-graph (see graphs.py).
+graph (see graphs_common.py).
 """
 import math
 
-from ..graphs import closure, metis, mod
+from .graphs_common import closure, metis, mod
 
 
 def relations(shard_amt):
