@@ -5,11 +5,15 @@ Tle{k} those joined by one of 1 to 2^k edges, so Tle{shard_amt} is the closure w
 """
 from .graphs_common import closure, unsharded
 
-
 def relations(shard_amt):
     return {f"T{k}": 2 for k in range(max(shard_amt, 1))} | {f"Tle{k}": 2 for k in range(shard_amt + 1)} | {"E": 2}
 
 
+"""
+afrati and ullman, "transitive closure and recursive datalog implemented on clusters" discusses conditions under which this beats (i.e., has fewer  derivations than) the linear algorithm.  the answer seems to be that if there is any sparsity at all in the graph, then linear is going to win, with significantly smaller asymptotic complexity.  however, the paper concludes that the algorithms are "incomparable", meaning that one can artificially construct input graphs where either wins.
+
+in addition to these asymptotic concerns, this has the unfortunate property of having a big constant factor compared to linear tc---lots of relations, all big, compared to linear tc's one big relation.
+"""
 def rules(shard_amt):
     return ([(0, "T0(x, y) :- E(x, y).")]
             + [(0, f"T{k}(x, y) :- T{k-1}(x, z), T{k-1}(z, y).") for k in range(1, shard_amt)]
