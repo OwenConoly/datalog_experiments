@@ -2,21 +2,24 @@
 Pieces of the Oldenburg road network (OL.cnode and OL.cedge: Feifei Li's spatial datasets,
 https://users.cs.utah.edu/~lifeifei/SpatialDataset.htm): the `size` nodes nearest a node chosen by `seed`, distance being
 max(|dx|, |dy|), so a square window; every road with both ends among them, in both directions; and the search starting
-at the chosen node.
+at the chosen node. OL.cnode and OL.cedge are downloaded into this directory the first time they're needed.
 """
 import os
 import random
 
+from ..download_common import fetch
+
 HERE = os.path.dirname(os.path.abspath(__file__))
+URL = "https://users.cs.utah.edu/~lifeifei/research/tpq/"
 
 
 def generate(size, seed):
     pos = {}
-    for line in open(os.path.join(HERE, "OL.cnode")):
+    for line in open(fetch(URL + "OL.cnode", os.path.join(HERE, "OL.cnode"))):
         i, x, y = line.split()
         pos[int(i)] = (float(x), float(y))
     adj = {v: set() for v in pos}
-    for line in open(os.path.join(HERE, "OL.cedge")):
+    for line in open(fetch(URL + "OL.cedge", os.path.join(HERE, "OL.cedge"))):
         _, u, v, _ = line.split()
         u, v = int(u), int(v)
         if u != v:

@@ -7,3 +7,6 @@ __pycache__/
 *~
 \#*#
 .#*
+# datasets downloaded on first use
+datasets/oldenburg/OL.c*
+datasets/roadnet_ca/roadNet-CA.txt.gz*
