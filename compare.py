@@ -6,13 +6,6 @@ per run, and for each dataset DATASET.png, evaluation cycles (boot excluded, the
 one line per variant. A variant that doesn't compile is left out, and a wrong run isn't plotted.
 
     python compare.py comparisons/NAME.json
-
-A comparison file looks like
-    {"question": "When does BFS sharded over a grid beat single-node BFS?",
-     "datasets": {"oldenburg": [200, 500, 1000]},
-     "seeds": [0],
-     "variants": {"1 node": {"program": "reach", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
-                  "2x2 grid, 4 regions": {"program": "bfs", "shard_amt": 4, "sharder": "metis", "placement": "ideal", "grid": "2x2"}}}
 """
 import csv
 import json
