@@ -1,6 +1,7 @@
 """
 A dataset here is {"node": the nodes, "edge": the directed edges (u, v), "start": the node the search starts from}, nodes being ints.
 """
+from ..graphs import metis, mod, reachable
 
 
 def relations(shard_amt):
@@ -12,24 +13,6 @@ def rules(shard_amt):
     """The rules, with a suggested 'ideal layout' (in this case, on 'shard_amt' nodes)"""
     return ([(i, f"Reached{j}(y) :- Reached{i}(x), E{i}_{j}(x, y).") for i in range(shard_amt) for j in range(shard_amt)]
             + [(i, f"Reached(x) :- Reached{i}(x).") for i in range(shard_amt)])
-
-
-def metis(dataset, shard_amt):
-    import pymetis
-
-    order = sorted(dataset["node"])
-    local = {v: k for k, v in enumerate(order)}
-    adj = {v: set() for v in order}
-    for u, v in dataset["edge"]:
-        if u != v:
-            adj[u].add(v)
-            adj[v].add(u)
-    _, parts = pymetis.part_graph(shard_amt, adjacency=[[local[w] for w in sorted(adj[v])] for v in order])
-    return dict(zip(order, parts))
-
-
-def mod(dataset, shard_amt):
-    return {v: v % shard_amt for v in dataset["node"]}
 
 
 SHARDERS = {"metis": metis, "mod": mod}
@@ -51,13 +34,4 @@ def inputs(dataset, shard_amt, sharder):
 
 
 def check_correctness(dataset, outputs):
-    succ = {}
-    for u, v in dataset["edge"]:
-        succ.setdefault(u, []).append(v)
-    reached, todo = {dataset["start"]}, [dataset["start"]]
-    while todo:
-        for v in succ.get(todo.pop(), ()):
-            if v not in reached:
-                reached.add(v)
-                todo.append(v)
-    return {x for (x,) in outputs["Reached"]} == reached
+    return {x for (x,) in outputs["Reached"]} == reachable(dataset)
