@@ -1,0 +1,9 @@
+# generated runs
+out/
+# Python
+__pycache__/
+.venv/
+# editor backups and autosaves
+*~
+\#*#
+.#*
