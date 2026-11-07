@@ -35,3 +35,15 @@ def inputs(dataset, shard_amt, sharder):
 
 def check_correctness(dataset, outputs):
     return {x for (x,) in outputs["Reached"]} == reachable(dataset)
+
+
+def layout_reasonable(shard_amt, rule_sets):
+    """ Returns False if the layout is unreasonable; the converse does not hold. rule_sets has one collection per node,
+    the indices into rules(shard_amt) of the rules on that node. """
+    if len(rule_sets) == shard_amt:
+        ideal = {}
+        for k, (node, _) in enumerate(rules(shard_amt)):
+            ideal.setdefault(node, set()).add(k)
+        return {frozenset(s) for s in rule_sets} == {frozenset(s) for s in ideal.values()}
+    else:
+        return True
