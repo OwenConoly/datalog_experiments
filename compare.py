@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FixedLocator, FuncFormatter, NullFormatter
 
 import run
+from compile import PLACEMENTS, checkout
 from datasets import DATASETS
 from programs import PROGRAMS
 
@@ -41,7 +42,7 @@ def load(path):
             problems.append(f"{name!r}: no program {v['program']!r}")
         elif v["sharder"] not in PROGRAMS[v["program"]].SHARDERS:
             problems.append(f"{name!r}: {v['program']} has no sharder {v['sharder']!r}")
-        elif v["placement"] not in run.PLACEMENTS:
+        elif v["placement"] not in PLACEMENTS:
             problems.append(f"{name!r}: no placement {v['placement']!r}")
     if len(c["variants"]) > len(COLORS):
         problems.append(f"at most {len(COLORS)} variants")
@@ -113,8 +114,8 @@ def plot(question, dataset, variants, rows, path):
 def main():
     path = sys.argv[1]
     c = load(path)
-    run.checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
-    run.checkout("DATALOG_SIMULATOR", "distributed-datalog-simulator")
+    checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
+    checkout("DATALOG_SIMULATOR", "distributed-datalog-simulator")
     out = os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0])
     os.makedirs(out, exist_ok=True)
 
@@ -122,7 +123,7 @@ def main():
     variants = {}
     for name, v in c["variants"].items():
         try:
-            run.compile_program(v["program"], v["shard_amt"], v["placement"], v["grid"])
+            run.compiled(v["program"], v["shard_amt"], v["placement"], v["grid"])
             variants[name] = v
         except RuntimeError as e:
             print(f"{name}: left out, it didn't compile: {str(e).strip().splitlines()[-1]}", flush=True)

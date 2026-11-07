@@ -1,78 +1,33 @@
 """
-One run: programs/PROGRAM with SHARD_AMT shards, its rules placed on a GRID by PLACEMENT (ideal: the layout its
-rules suggest, node k being the k-th of the grid's nodes in (x, y) order; single: every rule on (0,0); compiler: the
-compiler's optimizer), simulated at L2 on datasets/DATASET's SIZE and SEED sharded by the program's SHARDER, and
-checked by the program's check_correctness. Input facts enter, and outputs are collected, at (0,0).
+One run: programs/PROGRAM with SHARD_AMT shards, its rules placed on a GRID by PLACEMENT (see compile.py), simulated at
+L2 on datasets/DATASET's SIZE and SEED sharded by the program's SHARDER, and checked by the program's
+check_correctness. Input facts enter, and outputs are collected, at (0,0).
 
     python run.py PROGRAM SHARD_AMT SHARDER PLACEMENT GRID DATASET SIZE SEED
     e.g. python run.py bfs 4 metis ideal 2x2 oldenburg 500 0
 
-Compiled programs go in out/compiled/, runs in out/runs/. DATALOG_COMPILER and DATALOG_SIMULATOR name the
-distributing-datalog-compiler and distributed-datalog-simulator checkouts to use.
+Compiled programs go in out/compiled/, compiled once and reused after; runs go in out/runs/. DATALOG_COMPILER and
+DATALOG_SIMULATOR name the distributing-datalog-compiler and distributed-datalog-simulator checkouts to use.
 """
 import json
 import os
 import subprocess
 import sys
 
+from compile import checkout, compile_program
 from datasets import DATASETS
 from programs import PROGRAMS
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
-PLACEMENTS = ("ideal", "single", "compiler")
 
 
-def checkout(var, repo):
-    path = os.environ.get(var)
-    if not path:
-        sys.exit(f"run.py: set {var} to your {repo} checkout")
-    return path
-
-
-def grid_nodes(grid):
-    w, h = map(int, grid.split("x"))
-    return [[x, y] for x in range(w) for y in range(h)]
-
-
-def dl(relations, rules):
-    """The program as a .dl: its declarations, then its rules."""
-    decls = [f".decl {rel}({', '.join(f'{v}: number' for v in 'xyzwuv'[:arity])})" for rel, arity in relations.items()]
-    return "\n".join(decls + [""] + [rule for _, rule in rules]) + "\n"
-
-
-def compile_program(program, shard_amt, placement, grid):
-    """The compiled program's directory, compiled once."""
-    if placement not in PLACEMENTS:
-        raise ValueError(f"placement must be one of {', '.join(PLACEMENTS)}, not {placement!r}")
+def compiled(program, shard_amt, placement, grid):
+    """The compiled program's directory, compiled the first time it's asked for."""
     d = os.path.join(OUT, "compiled", f"{program}-{shard_amt}-{placement}-{grid}")
     if os.path.exists(os.path.join(d, "prog", "nodes.json")):
         return os.path.join(d, "prog")
-    os.makedirs(d, exist_ok=True)
-    prog = PROGRAMS[program]
-    rules = prog.rules(shard_amt)
-    with open(os.path.join(d, "prog.dl"), "w") as f:
-        f.write(dl(prog.relations(shard_amt), rules))
-
-    layout = {"fact_producers": {rel: [[0, 0]] for rel in prog.input_relations(shard_amt)},
-              "fact_consumers": {rel: [[0, 0]] for rel in prog.output_relations(shard_amt)}}
-    if placement != "compiler":
-        nodes, on = grid_nodes(grid), {}
-        for k, (node, _) in enumerate(rules):
-            on.setdefault(tuple(nodes[node if placement == "ideal" else 0]), []).append(k)
-        layout["layout"] = [[list(node), ks] for node, ks in on.items()]
-    flag, path = ("--locations", "locations.json") if placement == "compiler" else ("--layout", "layout.json")
-    with open(os.path.join(d, path), "w") as f:
-        json.dump(layout, f)
-
-    ddc = checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
-    w, h = grid.split("x")
-    p = subprocess.run([os.path.join(ddc, ".venv", "bin", "python3"), os.path.join(ddc, "src", "auto-compiler", "simple_compile.py"),
-                        os.path.join(d, "prog.dl"), "--dims", w, h, flag, os.path.join(d, path), "-o", os.path.join(d, "prog")],
-                       capture_output=True, text=True)
-    if p.returncode:
-        raise RuntimeError(f"the compiler failed: {(p.stderr or p.stdout).strip()}")
-    return os.path.join(d, "prog")
+    return compile_program(program, shard_amt, placement, grid, d)
 
 
 def hw_config(grid, prog_dir):
@@ -94,7 +49,7 @@ def hw_config(grid, prog_dir):
 
 
 def run(program, shard_amt, sharder, placement, grid, dataset, size, seed):
-    prog_dir = compile_program(program, shard_amt, placement, grid)
+    prog_dir = compiled(program, shard_amt, placement, grid)
     config = hw_config(grid, prog_dir)
     prog, data = PROGRAMS[program], DATASETS[dataset].generate(size, seed)
 
