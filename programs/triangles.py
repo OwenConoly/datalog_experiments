@@ -43,4 +43,12 @@ def check_correctness(dataset, outputs):
 
 
 def layout_reasonable(shard_amt, rule_sets):
-    return True
+    """ Returns False if the layout is unreasonable; the converse does not hold. rule_sets has one collection per node,
+    the indices into rules(shard_amt) of the rules on that node. The ideal layout is on shard_amt ** 3 nodes. """
+    if len(rule_sets) == shard_amt ** 3:
+        ideal = {}
+        for k, (node, _) in enumerate(rules(shard_amt)):
+            ideal.setdefault(node, set()).add(k)
+        return {frozenset(s) for s in rule_sets} == {frozenset(s) for s in ideal.values()}
+    else:
+        return True

@@ -1,0 +1,8 @@
+{
+  "program": "triangles",
+  "cases": [
+    {"shard_amt": 1, "grid": "1x1"},
+    {"shard_amt": 2, "grid": "2x4"},
+    {"shard_amt": 3, "grid": "3x9"}
+  ]
+}
