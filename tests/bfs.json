@@ -1,0 +1,10 @@
+{
+  "program": "bfs",
+  "cases": [
+    {"shard_amt": 2, "grid": "1x2"},
+    {"shard_amt": 3, "grid": "1x3"},
+    {"shard_amt": 4, "grid": "2x2"},
+    {"shard_amt": 6, "grid": "2x3"},
+    {"shard_amt": 9, "grid": "3x3"}
+  ]
+}
