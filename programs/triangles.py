@@ -40,3 +40,7 @@ def check_correctness(dataset, outputs):
     R, S, T = (dataset[r] for r in "RST")
     want = {(x, y, z) for x, y, z in dataset["Hash"] if (x, y) in R and (y, z) in S and (z, x) in T}
     return set(map(tuple, outputs["Interesting"])) == want
+
+
+def layout_reasonable(shard_amt, rule_sets):
+    return True

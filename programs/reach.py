@@ -29,3 +29,7 @@ def inputs(dataset, shard_amt, sharder):
 
 def check_correctness(dataset, outputs):
     return {x for (x,) in outputs["Reached"]} == reachable(dataset)
+
+
+def layout_reasonable(shard_amt, rule_sets):
+    return True

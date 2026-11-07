@@ -1,4 +1,4 @@
-from .tc_linear_left import SHARDERS, check_correctness, input_relations, inputs, output_relations, relations
+from .tc_linear_left import SHARDERS, check_correctness, input_relations, inputs, layout_reasonable, output_relations, relations
 
 
 def rules(shard_amt):

@@ -16,5 +16,6 @@ A program is a family of Datalog programs over one parameter, `shard_amt`.
 | `output_relations(shard_amt)` | the relations whose facts are the answer |
 | `inputs(dataset, shard_amt, sharder)` | the input facts, as `(relation, args)` pairs with integer args |
 | `check_correctness(dataset, outputs)` | whether `outputs` (`{relation: [args, …]}` for the output relations) is the right answer for `dataset` |
+| `layout_reasonable(shard_amt, rule_sets)` | `False` if a layout of the rules is unreasonable (`True` if there's no clear check): `rule_sets` has one collection per node of the grid, the indices into `rules(shard_amt)` of the rules on that node (empty if none) |
 
 The format of `dataset` may be different for each program.
