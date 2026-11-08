@@ -56,12 +56,15 @@ def load(path):
     return c
 
 
-def one(args):
-    """One run, given as run.run's arguments in order; its result, or {"error": ...}."""
+def one(job):
+    """One run, given as (comparison, variant, run.run's arguments in order); its result, or {"error": ...}."""
+    path, name, args = job
     try:
         return run.run(*args)
     except Exception as e:
         return {"error": str(e).strip().splitlines()[-1] if str(e).strip() else type(e).__name__}
+    finally:
+        print(f"done: {path}, {name}, {args[5]} {args[6]} seed {args[7]}", flush=True)
 
 
 def cycles(v):
@@ -151,7 +154,7 @@ def main():
             for seed in c["seeds"] for name, v in variants[path].items()]
     jobs.sort(key=lambda job: -job[2][6])
     with ProcessPoolExecutor() as pool:
-        results = list(pool.map(one, [args for _, _, args in jobs]))
+        results = list(pool.map(one, jobs))
 
     for path, c in comparisons.items():
         out = outs[path]
