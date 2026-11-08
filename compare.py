@@ -1,11 +1,13 @@
 """
-Runs a comparison: comparisons/NAME.json names its variants, each a program with the SHARD_AMT, SHARDER, PLACEMENT
+Runs comparisons: each comparisons/NAME.json names its variants, each a program with the SHARD_AMT, SHARDER, PLACEMENT
 and GRID run.py takes, and the datasets (each with its sizes) and seeds to run every variant on. Every run is
-compiled, simulated and checked by run.py, in parallel. The results go in out/comparisons/NAME/: results.csv, one row
-per run, and for each dataset DATASET.png, evaluation cycles (boot excluded, the mean over the seeds) against size,
-one line per variant. A variant that doesn't compile is left out, and a wrong run isn't plotted.
+compiled, simulated and checked by run.py, in parallel; comparisons given together share one pool, and a run two of them
+ask for is done once. Each comparison's results go in out/comparisons/NAME/: results.csv, one row per run, and for each
+dataset DATASET.png, evaluation cycles (boot excluded, the mean over the seeds) against size, one line per variant. A
+variant that doesn't compile is left out, and a wrong run isn't plotted.
 
-    python compare.py comparisons/NAME.json
+    python compare.py comparisons/NAME.json [comparisons/OTHER.json ...]
+    e.g. python compare.py comparisons/*.json
 """
 import csv
 import json
@@ -51,13 +53,12 @@ def load(path):
     return c
 
 
-def one(job):
-    name, variant, dataset, size, seed = job
+def one(key):
+    """One run, given as run.run's arguments in order; its result, or {"error": ...}."""
     try:
-        result = run.run(**variant, dataset=dataset, size=size, seed=seed)
+        return run.run(*key)
     except Exception as e:
-        result = {"error": str(e).strip().splitlines()[-1] if str(e).strip() else type(e).__name__}
-    return {"variant": name, "dataset": dataset, "size": size, "seed": seed, **result}
+        return {"error": str(e).strip().splitlines()[-1] if str(e).strip() else type(e).__name__}
 
 
 def cycles(v):
@@ -112,43 +113,65 @@ def plot(question, dataset, variants, rows, path):
 
 
 def main():
-    path = sys.argv[1]
-    c = load(path)
+    paths = sys.argv[1:]
+    if not paths:
+        sys.exit("usage: python compare.py comparisons/NAME.json [comparisons/OTHER.json ...]")
+    comparisons = {path: load(path) for path in paths}
     checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
     checkout("DATALOG_SIMULATOR", "distributed-datalog-simulator")
-    out = os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0])
-    os.makedirs(out, exist_ok=True)
 
-    # compiled one at a time before any run, so parallel runs never compile the same program at once
-    variants = {}
-    for name, v in c["variants"].items():
-        try:
-            run.compiled(v["program"], v["shard_amt"], v["placement"], v["grid"])
-            variants[name] = v
-        except RuntimeError as e:
-            print(f"{name}: left out, it didn't compile: {str(e).strip().splitlines()[-1]}", flush=True)
+    # every program the comparisons use, compiled once and one at a time before any run, so parallel runs never
+    # compile the same program at once
+    failed, variants = {}, {}
+    for path, c in comparisons.items():
+        variants[path] = {}
+        for name, v in c["variants"].items():
+            program = (v["program"], v["shard_amt"], v["placement"], v["grid"])
+            if program not in failed:
+                try:
+                    run.compiled(*program)
+                except RuntimeError as e:
+                    failed[program] = str(e).strip().splitlines()[-1]
+            if program in failed:
+                print(f"{path}: {name}: left out, it didn't compile: {failed[program]}", flush=True)
+            else:
+                variants[path][name] = v
 
-    # the biggest first, so the slowest runs start early
-    jobs = [(name, v, dataset, size, seed) for dataset, sizes in c["datasets"].items() for size in sorted(sizes, reverse=True)
-            for seed in c["seeds"] for name, v in variants.items()]
+    # every run the comparisons ask for, each once, as run.run's arguments, with who asked for it
+    wanted = {}
+    for path, c in comparisons.items():
+        for dataset, sizes in c["datasets"].items():
+            for size in sizes:
+                for seed in c["seeds"]:
+                    for name, v in variants[path].items():
+                        key = (v["program"], v["shard_amt"], v["sharder"], v["placement"], v["grid"], dataset, size, seed)
+                        wanted.setdefault(key, []).append((path, name))
+    keys = sorted(wanted, key=lambda key: -key[6])   # roughly the biggest first, so the slowest runs start early
     with ProcessPoolExecutor() as pool:
-        rows = list(pool.map(one, jobs))
-    order = list(variants)
-    rows.sort(key=lambda r: (list(c["datasets"]).index(r["dataset"]), r["size"], r["seed"], order.index(r["variant"])))
+        results = dict(zip(keys, pool.map(one, keys)))
 
-    with open(os.path.join(out, "results.csv"), "w", newline="") as f:
-        w = csv.DictWriter(f, COLUMNS)
-        w.writeheader()
-        w.writerows(rows)
-    width = max(map(len, order))
-    print(f"{'dataset':>18} {'size':>6} {'seed':>4} {'variant':>{width}} {'eval cycles':>12} {'rounds':>6} ok")
-    for r in rows:
-        head = f"{r['dataset']:>18} {r['size']:>6} {r['seed']:>4} {r['variant']:>{width}}"
-        print(f"{head} ERROR {r['error']}" if "error" in r else
-              f"{head} {r['evaluation']:>12,} {r['rounds']:>6} {'yes' if r['correct'] else 'NO'}")
-    for dataset in c["datasets"]:
-        plot(c["question"], dataset, order, [r for r in rows if r["dataset"] == dataset], os.path.join(out, f"{dataset}.png"))
-    print(f"results in {os.path.relpath(out)}")
+    for path, c in comparisons.items():
+        out = os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0])
+        os.makedirs(out, exist_ok=True)
+        order = list(variants[path])
+        rows = [{"variant": name, "dataset": key[5], "size": key[6], "seed": key[7], **results[key]}
+                for key, askers in wanted.items() for asker, name in askers if asker == path]
+        rows.sort(key=lambda r: (list(c["datasets"]).index(r["dataset"]), r["size"], r["seed"], order.index(r["variant"])))
+
+        with open(os.path.join(out, "results.csv"), "w", newline="") as f:
+            w = csv.DictWriter(f, COLUMNS)
+            w.writeheader()
+            w.writerows(rows)
+        width = max(map(len, order), default=7)
+        print(f"\n== {path}")
+        print(f"{'dataset':>18} {'size':>6} {'seed':>4} {'variant':>{width}} {'eval cycles':>12} {'rounds':>6} ok")
+        for r in rows:
+            head = f"{r['dataset']:>18} {r['size']:>6} {r['seed']:>4} {r['variant']:>{width}}"
+            print(f"{head} ERROR {r['error']}" if "error" in r else
+                  f"{head} {r['evaluation']:>12,} {r['rounds']:>6} {'yes' if r['correct'] else 'NO'}")
+        for dataset in c["datasets"]:
+            plot(c["question"], dataset, order, [r for r in rows if r["dataset"] == dataset], os.path.join(out, f"{dataset}.png"))
+        print(f"results in {os.path.relpath(out)}")
 
 
 if __name__ == "__main__":
