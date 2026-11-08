@@ -3,6 +3,7 @@
 - Example Datalog programs (`programs/`)
 - Sanity checks for the layouts chosen by the distributing compiler (`tests/`)
 - Experiments, using Benson's simulator to get performance numbers comparing some different programs (`comparisons/`)
+- Different datasets to give as input to the programs (`datasets/`)
 
 ## Setup
 
@@ -26,7 +27,7 @@ Or, to run all the tests:
 .venv/bin/python test_layout.py tests/*.json
 ```
 
-## Comparisons
+## Running Benchmarks/Comparisons
 
 For example:
 
