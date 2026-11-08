@@ -22,9 +22,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
 
 
-def compiled(program, shard_amt, placement, grid):
-    """The compiled program's directory, compiled the first time it's asked for."""
-    d = os.path.join(OUT, "compiled", f"{program}-{shard_amt}-{placement}-{grid}")
+def compiled(program, shard_amt, placement, grid, out=OUT):
+    """The compiled program's directory under out/compiled/, compiled the first time it's asked for."""
+    d = os.path.join(out, "compiled", f"{program}-{shard_amt}-{placement}-{grid}")
     if os.path.exists(os.path.join(d, "prog", "nodes.json")):
         return os.path.join(d, "prog")
     return compile_program(program, shard_amt, placement, grid, d)
@@ -48,12 +48,13 @@ def hw_config(grid, prog_dir):
     return path
 
 
-def run(program, shard_amt, sharder, placement, grid, dataset, size, seed):
-    prog_dir = compiled(program, shard_amt, placement, grid)
+def run(program, shard_amt, sharder, placement, grid, dataset, size, seed, out=OUT):
+    """The run's results; its program is compiled under out/compiled/ and its files go under out/runs/."""
+    prog_dir = compiled(program, shard_amt, placement, grid, out)
     config = hw_config(grid, prog_dir)
     prog, data = PROGRAMS[program], DATASETS[dataset].generate(size, seed)
 
-    d = os.path.join(OUT, "runs", f"{program}-{shard_amt}-{sharder}-{placement}-{grid}-{dataset}-{size}-{seed}")
+    d = os.path.join(out, "runs", f"{program}-{shard_amt}-{sharder}-{placement}-{grid}-{dataset}-{size}-{seed}")
     os.makedirs(d, exist_ok=True)
     facts, summary, answer = (os.path.join(d, f) for f in ("facts.json", "summary.json", "answer.json"))
     with open(facts, "w") as f:

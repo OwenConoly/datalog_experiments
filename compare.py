@@ -1,10 +1,10 @@
 """
 Runs comparisons: each comparisons/NAME.json names its variants, each a program with the SHARD_AMT, SHARDER, PLACEMENT
 and GRID run.py takes, and the datasets (each with its sizes) and seeds to run every variant on. Every run is
-compiled, simulated and checked by run.py, in parallel; comparisons given together share one pool, and a run two of them
-ask for is done once. Each comparison's results go in out/comparisons/NAME/: results.csv, one row per run, and for each
-dataset DATASET.png, evaluation cycles (boot excluded, the mean over the seeds) against size, one line per variant. A
-variant that doesn't compile is left out, and a wrong run isn't plotted.
+compiled, simulated and checked by run.py, in parallel, and comparisons given together share one pool. Everything about a
+comparison goes in out/comparisons/NAME/: its compiled programs in compiled/, its runs' files in runs/, results.csv with
+one row per run, and for each dataset DATASET.png, evaluation cycles (boot excluded, the mean over the seeds) against
+size, one line per variant. A variant that doesn't compile is left out, and a wrong run isn't plotted.
 
     python compare.py comparisons/NAME.json [comparisons/OTHER.json ...]
     e.g. python compare.py comparisons/*.json
@@ -53,10 +53,10 @@ def load(path):
     return c
 
 
-def one(key):
+def one(args):
     """One run, given as run.run's arguments in order; its result, or {"error": ...}."""
     try:
-        return run.run(*key)
+        return run.run(*args)
     except Exception as e:
         return {"error": str(e).strip().splitlines()[-1] if str(e).strip() else type(e).__name__}
 
@@ -117,45 +117,38 @@ def main():
     if not paths:
         sys.exit("usage: python compare.py comparisons/NAME.json [comparisons/OTHER.json ...]")
     comparisons = {path: load(path) for path in paths}
+    outs = {path: os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0]) for path in paths}
+    if len(set(outs.values())) < len(outs):
+        sys.exit("two of the comparisons have the same name, so they'd share out/comparisons/NAME/")
     checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
     checkout("DATALOG_SIMULATOR", "distributed-datalog-simulator")
 
-    # every program the comparisons use, compiled once and one at a time before any run, so parallel runs never
-    # compile the same program at once
-    failed, variants = {}, {}
+    # each comparison's programs, compiled one at a time before any run, so parallel runs never compile the same
+    # program at once
+    variants = {}
     for path, c in comparisons.items():
         variants[path] = {}
         for name, v in c["variants"].items():
-            program = (v["program"], v["shard_amt"], v["placement"], v["grid"])
-            if program not in failed:
-                try:
-                    run.compiled(*program)
-                except RuntimeError as e:
-                    failed[program] = str(e).strip().splitlines()[-1]
-            if program in failed:
-                print(f"{path}: {name}: left out, it didn't compile: {failed[program]}", flush=True)
-            else:
+            try:
+                run.compiled(v["program"], v["shard_amt"], v["placement"], v["grid"], outs[path])
                 variants[path][name] = v
+            except RuntimeError as e:
+                print(f"{path}: {name}: left out, it didn't compile: {str(e).strip().splitlines()[-1]}", flush=True)
 
-    # every run the comparisons ask for, each once, as run.run's arguments, with who asked for it
-    wanted = {}
-    for path, c in comparisons.items():
-        for dataset, sizes in c["datasets"].items():
-            for size in sizes:
-                for seed in c["seeds"]:
-                    for name, v in variants[path].items():
-                        key = (v["program"], v["shard_amt"], v["sharder"], v["placement"], v["grid"], dataset, size, seed)
-                        wanted.setdefault(key, []).append((path, name))
-    keys = sorted(wanted, key=lambda key: -key[6])   # roughly the biggest first, so the slowest runs start early
+    # every run, as run.run's arguments, roughly the biggest first, so the slowest runs start early
+    jobs = [(path, name, (v["program"], v["shard_amt"], v["sharder"], v["placement"], v["grid"], dataset, size, seed, outs[path]))
+            for path, c in comparisons.items() for dataset, sizes in c["datasets"].items() for size in sizes
+            for seed in c["seeds"] for name, v in variants[path].items()]
+    jobs.sort(key=lambda job: -job[2][6])
     with ProcessPoolExecutor() as pool:
-        results = dict(zip(keys, pool.map(one, keys)))
+        results = list(pool.map(one, [args for _, _, args in jobs]))
 
     for path, c in comparisons.items():
-        out = os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0])
+        out = outs[path]
         os.makedirs(out, exist_ok=True)
         order = list(variants[path])
-        rows = [{"variant": name, "dataset": key[5], "size": key[6], "seed": key[7], **results[key]}
-                for key, askers in wanted.items() for asker, name in askers if asker == path]
+        rows = [{"variant": name, "dataset": args[5], "size": args[6], "seed": args[7], **result}
+                for (asker, name, args), result in zip(jobs, results) if asker == path]
         rows.sort(key=lambda r: (list(c["datasets"]).index(r["dataset"]), r["size"], r["seed"], order.index(r["variant"])))
 
         with open(os.path.join(out, "results.csv"), "w", newline="") as f:
