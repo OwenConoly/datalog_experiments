@@ -1,6 +1,6 @@
 {
   "question": "Does sparse_path, its regions around a hub, beat linear TC on one node?",
-  "datasets": {"oldenburg": [100, 200], "geometric": [100]},
+  "datasets": {"oldenburg": [100, 200], "geometric": [25, 50]},
   "seeds": [0],
   "variants": {
     "1 node, linear TC": {"program": "tc_linear_left", "shard_amt": 1, "sharder": "none", "placement": "single", "grid": "1x1"},
