@@ -2,8 +2,8 @@
 Compiles programs/PROGRAM with SHARD_AMT shards for a GRID, its rules placed by PLACEMENT (ideal: the layout its rules
 suggest, node k being the k-th of the grid's nodes in (x, y) order; single: every rule on (0,0); compiler: the
 compiler's optimizer), into OUT_DIR: the program as prog.dl, the layout or locations given to the compiler, and the
-compiled program in OUT_DIR/prog. Input facts enter, and outputs are collected, at (0,0). DATALOG_COMPILER names the
-distributing-datalog-compiler checkout to use.
+compiled program in OUT_DIR/prog, with xy (dimension-order) routes. Input facts enter, and outputs are collected, at
+(0,0). DATALOG_COMPILER names the distributing-datalog-compiler checkout to use.
 
     python compile.py PROGRAM SHARD_AMT PLACEMENT GRID OUT_DIR
     e.g. python compile.py bfs 4 compiler 2x2 out/bfs
@@ -62,8 +62,9 @@ def compile_program(program, shard_amt, placement, grid, out_dir):
 
     ddc = checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
     w, h = grid.split("x")
-    p = subprocess.run([os.path.join(ddc, ".venv", "bin", "python3"), os.path.join(ddc, "src", "auto-compiler", "simple_compile.py"),
-                        os.path.join(out_dir, "prog.dl"), "--dims", w, h, flag, os.path.join(out_dir, path), "-o", prog_dir],
+    p = subprocess.run([os.path.join(ddc, ".venv", "bin", "python3"), os.path.join(ddc, "src", "auto-compiler", "compile.py"), "compile",
+                        os.path.join(out_dir, "prog.dl"), "--dims", w, h, flag, os.path.join(out_dir, path), "--routes", "xy",
+                        "-o", prog_dir],
                        capture_output=True, text=True)
     if p.returncode:
         raise RuntimeError(f"the compiler failed: {(p.stderr or p.stdout).strip()}")
