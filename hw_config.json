@@ -1,0 +1,62 @@
+{
+  "format": "hw-config/3",
+  "testbench": "grid",
+  "network": {
+    "max_nodes": 25,
+    "num_edges": 4,
+    "num_channels": 2,
+    "out_port": 64,
+    "inbox": 64
+  },
+  "evaluator": {
+    "max_tries": 128,
+    "max_rules": 128,
+    "max_clauses": 4,
+    "max_vars": 7,
+    "max_args": 4,
+    "max_concls": 1
+  },
+  "join": {
+    "units": 2,
+    "pes": 2,
+    "task_queue": 16,
+    "pending_queue": 4,
+    "ready_queue": 4,
+    "out_queue": 2,
+    "dispatch_queue": 2,
+    "result_queue": 2
+  },
+  "memory": {
+    "page_bytes": 8192,
+    "packet_bits": 512,
+    "addr_bits": 26,
+    "value_bits": 32,
+    "cache_sets": 8,
+    "cache_ways": 4,
+    "stream_queue": 2,
+    "miss_resp_queue": 2,
+    "write_queue": 2,
+    "mem_read": 6,
+    "mem_write": 5
+  },
+  "updater": {
+    "max_delta_per_round": 1000000000,
+    "dedup_sets": 2048,
+    "dedup_ways": 4,
+    "dedup_vars": 3,
+    "delta_chunk": 4096,
+    "delta_chunks": 100000,
+    "bram": 1
+  },
+  "forwarder": {
+    "max_dests": 6,
+    "local": 4,
+    "deliver": 4,
+    "age_limit": 32
+  },
+  "boot": {
+    "max_edb_facts_per_node": 1000000,
+    "max_trie_writes_per_node": 40000,
+    "preload_injected": false
+  }
+}
