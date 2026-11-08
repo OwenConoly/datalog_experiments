@@ -1,9 +1,6 @@
-# programs
+Each example, which lives in `programs/<name>.py`, is a family of Datalog programs over one parameter, `shard_amt`.
 
-Each program is `programs/<name>.py`.
-A dictionary mapping program names to modules (e.g.,"bfs" -> bfs.py) is maintained in `programs/__init__.py`.
-
-A program is a family of Datalog programs over one parameter, `shard_amt`.
+A dictionary mapping program names to modules (e.g., "bfs" -> bfs.py) is maintained in `programs/__init__.py`.
 
 `<name>.py` must define:
 
