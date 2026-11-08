@@ -27,6 +27,8 @@ Or, to run all the tests:
 .venv/bin/python test_layout.py tests/*.json
 ```
 
+If a test is failing to terminate, this is probably not a bug in the test harness; the problem is that the compiler is taking an long time.
+
 ## Running Benchmarks/Comparisons
 
 For example:
