@@ -1,6 +1,6 @@
 {
   "question": "Does sharding the triangle join over a grid beat one node?",
-  "datasets": {"triangle_relations": [100, 150]},
+  "datasets": {"triangle_relations": [50, 100]},
   "seeds": [0],
   "variants": {
     "1 node": {"program": "triangles", "shard_amt": 1, "sharder": "mod", "placement": "single", "grid": "1x1"},

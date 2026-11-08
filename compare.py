@@ -1,15 +1,16 @@
 """
-Runs comparisons: each comparisons/NAME.json names its variants, each a program with the SHARD_AMT, SHARDER, PLACEMENT
-and GRID run.py takes, and the datasets (each with its sizes) and seeds to run every variant on. Every run is
-compiled, simulated and checked by run.py, in parallel, and comparisons given together share one pool. Everything about a
-comparison goes in out/comparisons/NAME/: its compiled programs in compiled/, its runs' files in runs/, results.csv with
-one row per run, and for each dataset DATASET.png, evaluation cycles (boot excluded, the mean over the seeds) against
-size, one line per variant. A variant that doesn't compile is left out, and a wrong run isn't plotted.
+Runs comparisons: each DIR/NAME.json (DIR being quick_comparisons or slow_comparisons) names its variants, each a
+program with the SHARD_AMT, SHARDER, PLACEMENT and GRID run.py takes, and the datasets (each with its sizes) and seeds to
+run every variant on. Every run is compiled, simulated and checked by run.py, in parallel, and comparisons given together
+share one pool. Everything about a comparison goes in out/DIR/NAME/: its compiled programs in compiled/, its runs' files
+in runs/, results.csv with one row per run, and for each dataset DATASET.png, evaluation cycles (boot excluded, the mean
+over the seeds) against size, one line per variant. A variant that doesn't compile is left out, and a wrong run isn't
+plotted.
 
-    python compare.py [--no-simulate] comparisons/NAME.json [comparisons/OTHER.json ...]
-    e.g. python compare.py comparisons/*.json
+    python compare.py [--no-simulate] DIR/NAME.json [DIR/OTHER.json ...]
+    e.g. python compare.py quick_comparisons/*.json
 
-With --no-simulate it only compiles each comparison's programs, into out/comparisons/NAME/compiled/.
+With --no-simulate it only compiles each comparison's programs, into out/DIR/NAME/compiled/.
 """
 import argparse
 import csv
@@ -120,14 +121,15 @@ def plot(question, dataset, variants, rows, path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("comparisons", nargs="+", help="comparison files, e.g. comparisons/*.json")
+    ap.add_argument("comparisons", nargs="+", help="comparison files, e.g. quick_comparisons/*.json")
     ap.add_argument("--no-simulate", action="store_true", help="only compile each comparison's programs")
     args = ap.parse_args()
     paths = args.comparisons
     comparisons = {path: load(path) for path in paths}
-    outs = {path: os.path.join(run.OUT, "comparisons", os.path.splitext(os.path.basename(path))[0]) for path in paths}
+    outs = {path: os.path.join(run.OUT, os.path.basename(os.path.dirname(os.path.abspath(path))),
+                               os.path.splitext(os.path.basename(path))[0]) for path in paths}
     if len(set(outs.values())) < len(outs):
-        sys.exit("two of the comparisons have the same name, so they'd share out/comparisons/NAME/")
+        sys.exit("two of the comparisons have the same name, so they'd share out/DIR/NAME/")
     checkout("DATALOG_COMPILER", "distributing-datalog-compiler")
     if not args.no_simulate:
         checkout("DATALOG_SIMULATOR", "distributed-datalog-simulator")

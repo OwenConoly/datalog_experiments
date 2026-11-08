@@ -2,7 +2,7 @@
 
 - Example Datalog programs (`programs/`)
 - Sanity checks for the layouts chosen by the distributing compiler (`tests/`)
-- Experiments, using Benson's simulator to get performance numbers comparing some different programs (`comparisons/`)
+- Experiments, using Benson's simulator to get performance numbers comparing some different programs (`quick_comparisons/` and `slow_comparisons/`)
 - Different datasets to give as input to the programs (`datasets/`)
 
 ## Setup
@@ -34,13 +34,13 @@ If a test is failing to terminate, this is probably not a bug in the test harnes
 For example:
 
 ```sh
-.venv/bin/python compare.py comparisons/bfs_roads.json
+.venv/bin/python compare.py quick_comparisons/bfs_roads.json
 ```
 
-Or, to do all of them:
+Or, to do all the quick ones (finished in a couple minutes last time I checked):
 
 ```sh
-.venv/bin/python compare.py comparisons/*.json
+.venv/bin/python compare.py quick_comparisons/*.json
 ```
 
 Results (including the distributing compiler's output, and including a pretty performance plot) will be printed in `out/`.
@@ -48,5 +48,5 @@ Results (including the distributing compiler's output, and including a pretty pe
 To skip calling the simulator, and just get the compiled output corresponding to the comparisons, use the `--no-simulate` flag:
 
 ```sh
-.venv/bin/python compare.py comparisons/bfs_roads.json --no-simulate
+.venv/bin/python compare.py quick_comparisons/bfs_roads.json --no-simulate
 ```
